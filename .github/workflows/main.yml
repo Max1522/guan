@@ -1,0 +1,33 @@
+name: weixin
+on:
+  workflow_dispatch:
+  schedule: 
+    # 注释正确：国际标准时间0点（UTC 00:00）→ 北京时间上午8点（UTC+8）
+    - cron: '0 0 * * *'
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    steps:
+      # 1. 升级 checkout 到最新稳定版 v4（修复安全隐患）
+      - uses: actions/checkout@v4
+    
+      - name: Set up Python 3.9
+        # 2. 升级 setup-python 到 v5（支持 3.9.1 精确版本）
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9.1'  # 加引号避免 YAML 解析歧义（规范写法）
+      
+      - name: Set timezone to Asia/Shanghai
+        # 3. 加 sudo 提权，用 ln -sf 更规范（避免文件占用报错）
+        run: |
+          sudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+          date  # 可选：验证时区是否生效（日志中会显示上海时间，如 CST 时区）
+      
+      - name: Install pip packages
+        run: |
+          python -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+      
+      - name: Run weixin script
+        run: |
+          python3 main.py
